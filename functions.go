@@ -3,18 +3,24 @@ package main
 import (
 	"time"
 
-	"github.com/franciscoescher/goopenai"
+	"github.com/sashabaranov/go-openai"
 )
 
 func GetTime() string {
 	return time.Now().String()
 }
 
-var getTimeMetadata = goopenai.Function{
+var getTimeMetadata = &openai.FunctionDefine{
 	Name:        "get_time",
 	Description: "Get the current time",
-	Parameters: goopenai.U{
-		"type":       "object",
-		"properties": goopenai.U{},
+	Parameters: &openai.FunctionParams{
+		Type: openai.JSONSchemaTypeObject,
+		Properties: map[string]*openai.JSONSchemaDefine{
+			"dummy": {
+				Type:        openai.JSONSchemaTypeNull,
+				Description: "",
+			},
+		},
+		Required: []string{},
 	},
 }

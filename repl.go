@@ -7,37 +7,37 @@ import (
 	"log"
 	"os"
 
-	"github.com/franciscoescher/goopenai"
+	"github.com/sashabaranov/go-openai"
 )
 
-func repl(client *goopenai.Client) {
-	messages := []goopenai.Message{}
+func repl(client *openai.Client) {
+	var messages []openai.ChatCompletionMessage
 
 	scanner := bufio.NewScanner(os.Stdin)
 	inputRequired := "user"
 	functionName := ""
 	//functionArgs := ""
 	for {
-		var nextMessage goopenai.Message
+		var nextMessage openai.ChatCompletionMessage
 		if inputRequired == "user" {
 			fmt.Print("user: ")
 			scanner.Scan()
-			nextMessage = goopenai.Message{
+			nextMessage = openai.ChatCompletionMessage{
 				Role:    "user",
-				Content: s(scanner.Text()),
+				Content: scanner.Text(),
 			}
 		} else if inputRequired == "function_call" {
 			switch functionName {
 			case getTimeMetadata.Name:
-				nextMessage = goopenai.Message{
+				nextMessage = openai.ChatCompletionMessage{
 					Role:    "function",
 					Name:    functionName,
-					Content: s(GetTime()),
+					Content: GetTime(),
 				}
 			default:
 				log.Panicf("unrecognized function name %s", functionName)
 			}
-			fmt.Printf("%s: %s\n", nextMessage.Name, *nextMessage.Content)
+			fmt.Printf("%s: %s\n", nextMessage.Name, nextMessage.Content)
 		} else {
 			log.Panicf("bad input required %s", inputRequired)
 		}
@@ -48,21 +48,18 @@ func repl(client *goopenai.Client) {
 
 		messages = append(messages, nextMessage)
 
-		r := goopenai.CreateCompletionsRequest{
-			Model:       TURBO_WITH_FUNCTIONS,
+		r := openai.ChatCompletionRequest{
+			Model:       openai.GPT3Dot5Turbo0613,
 			Messages:    messages,
 			Temperature: 0.7,
-			Functions: []goopenai.Function{
+			Functions: []*openai.FunctionDefine{
 				getTimeMetadata,
 			},
 		}
 
-		completions, err := client.CreateCompletions(context.Background(), r)
+		completions, err := client.CreateChatCompletion(context.Background(), r)
 		if err != nil {
 			log.Panicf("could not create completions %v", err)
-		}
-		if completions.Error.Message != "" {
-			log.Panicf("could not create completions %v", completions.Error.Message)
 		}
 
 		if len(completions.Choices) != 1 {
@@ -80,7 +77,7 @@ func repl(client *goopenai.Client) {
 			fmt.Printf("assistant: calling function %s\n", functionName)
 			//functionArgs = choice.Message.FunctionCall.Arguments
 		default:
-			fmt.Printf("assistant: %s\n", *choice.Message.Content)
+			fmt.Printf("assistant: %s\n", choice.Message.Content)
 			inputRequired = "user"
 		}
 	}

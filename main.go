@@ -4,12 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/franciscoescher/goopenai"
 	"github.com/joho/godotenv"
-)
-
-const (
-	TURBO_WITH_FUNCTIONS = "gpt-3.5-turbo-0613"
+	"github.com/sashabaranov/go-openai"
 )
 
 func main() {
@@ -19,9 +15,8 @@ func main() {
 	}
 
 	apiKey := os.Getenv("OPENAI_API_KEY")
-	organization := os.Getenv("API_ORG")
 
-	client := goopenai.NewClient(apiKey, organization)
+	client := openai.NewClient(apiKey)
 
 	repl(client)
 }
