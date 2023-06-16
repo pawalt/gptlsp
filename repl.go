@@ -45,6 +45,7 @@ func repl(client *openai.Client) {
 				getTimeMetadata,
 				listFilesMetadata,
 				analyzeMetadata,
+				modifyFilesMetadata,
 			},
 		}
 
@@ -83,8 +84,12 @@ func executeFunction(client *openai.Client, functionName string, functionArgs st
 		resp = ListFiles(functionArgs)
 	case readFilesMetadata.Name:
 		resp = ReadFiles(functionArgs)
+	case writeFileMetadata.Name:
+		resp = WriteFile(functionArgs)
 	case analyzeMetadata.Name:
 		resp = Analyze(functionArgs, client)
+	case modifyFilesMetadata.Name:
+		resp = Modify(functionArgs, client)
 	default:
 		log.Panicf("unrecognized function name %s", functionName)
 	}
