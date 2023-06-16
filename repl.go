@@ -28,29 +28,7 @@ func repl(client *openai.Client) {
 				Content: scanner.Text(),
 			}
 		} else if inputRequired == "function_call" {
-			var resp any
-			switch functionName {
-			case getTimeMetadata.Name:
-				resp = GetTime()
-			case listFilesMetadata.Name:
-				resp = ListFiles(functionArgs)
-			case readFileMetadata.Name:
-				resp = ReadFile(functionArgs)
-			default:
-				log.Panicf("unrecognized function name %s", functionName)
-			}
-			b, err := json.Marshal(resp)
-			if err != nil {
-				log.Panicf("err marshalling %v", err)
-			}
-
-			nextMessage = openai.ChatCompletionMessage{
-				Role:    "function",
-				Name:    functionName,
-				Content: string(b),
-			}
-
-			fmt.Printf("%s(%s): %s\n", functionName, functionArgs, nextMessage.Content)
+			nextMessage = executeFunction(client, functionName, functionArgs)
 		} else {
 			log.Panicf("bad input required %s", inputRequired)
 		}
@@ -66,7 +44,7 @@ func repl(client *openai.Client) {
 			Functions: []*openai.FunctionDefine{
 				getTimeMetadata,
 				listFilesMetadata,
-				readFileMetadata,
+				analyzeMetadata,
 			},
 		}
 
@@ -93,5 +71,41 @@ func repl(client *openai.Client) {
 			fmt.Printf("assistant: %s\n", choice.Message.Content)
 			inputRequired = "user"
 		}
+	}
+}
+
+func executeFunction(client *openai.Client, functionName string, functionArgs string) openai.ChatCompletionMessage {
+	var resp any
+	switch functionName {
+	case getTimeMetadata.Name:
+		resp = GetTime()
+	case listFilesMetadata.Name:
+		resp = ListFiles(functionArgs)
+	case readFilesMetadata.Name:
+		resp = ReadFiles(functionArgs)
+	case analyzeMetadata.Name:
+		resp = Analyze(functionArgs, client)
+	default:
+		log.Panicf("unrecognized function name %s", functionName)
+	}
+	b, err := json.Marshal(resp)
+	if err != nil {
+		log.Panicf("err marshalling %v", err)
+	}
+
+	respText := string(b)
+	humanReadable := respText
+
+	truncateLen := 200
+	if len(humanReadable) > truncateLen {
+		humanReadable = humanReadable[:truncateLen] + "..."
+	}
+
+	fmt.Printf("%s(%s): %s\n", functionName, functionArgs, humanReadable)
+
+	return openai.ChatCompletionMessage{
+		Role:    "function",
+		Name:    functionName,
+		Content: respText,
 	}
 }
