@@ -268,6 +268,19 @@ func GlobFiles(raw string) map[string][]string {
 	_ = json.Unmarshal([]byte(raw), &req)
 	pattern := req.Pattern
 
+	// Ensure the pattern doesn't go outside the current directory
+	currDir, err := filepath.Abs(".")
+	if err != nil {
+		return map[string][]string{
+			"error": {"could not determine current directory"},
+		}
+	}
+	if !strings.HasPrefix(pattern, currDir) {
+		return map[string][]string{
+			"error": {"pattern attempts to escape current directory"},
+		}
+	}
+
 	matches, err := filepath.Glob(pattern)
 	if err != nil {
 		return map[string][]string{}
