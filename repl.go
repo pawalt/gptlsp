@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -16,7 +17,7 @@ func repl(client *openai.Client) {
 	scanner := bufio.NewScanner(os.Stdin)
 	inputRequired := "user"
 	functionName := ""
-	//functionArgs := ""
+	functionArgs := ""
 	for {
 		var nextMessage openai.ChatCompletionMessage
 		if inputRequired == "user" {
@@ -27,33 +28,45 @@ func repl(client *openai.Client) {
 				Content: scanner.Text(),
 			}
 		} else if inputRequired == "function_call" {
+			var resp any
 			switch functionName {
 			case getTimeMetadata.Name:
-				nextMessage = openai.ChatCompletionMessage{
-					Role:    "function",
-					Name:    functionName,
-					Content: GetTime(),
-				}
+				resp = GetTime()
+			case listFilesMetadata.Name:
+				resp = ListFiles(functionArgs)
+			case readFileMetadata.Name:
+				resp = ReadFile(functionArgs)
 			default:
 				log.Panicf("unrecognized function name %s", functionName)
 			}
-			fmt.Printf("%s: %s\n", nextMessage.Name, nextMessage.Content)
+			b, err := json.Marshal(resp)
+			if err != nil {
+				log.Panicf("err marshalling %v", err)
+			}
+
+			nextMessage = openai.ChatCompletionMessage{
+				Role:    "function",
+				Name:    functionName,
+				Content: string(b),
+			}
+
+			fmt.Printf("%s(%s): %s\n", functionName, functionArgs, nextMessage.Content)
 		} else {
 			log.Panicf("bad input required %s", inputRequired)
 		}
 
-		if nextMessage.Role == "" {
-			log.Panic("why no role???")
-		}
-
 		messages = append(messages, nextMessage)
 
+		// model := openai.GPT3Dot5Turbo0613
+		model := openai.GPT40613
 		r := openai.ChatCompletionRequest{
-			Model:       openai.GPT3Dot5Turbo0613,
+			Model:       model,
 			Messages:    messages,
 			Temperature: 0.7,
 			Functions: []*openai.FunctionDefine{
 				getTimeMetadata,
+				listFilesMetadata,
+				readFileMetadata,
 			},
 		}
 
@@ -75,14 +88,10 @@ func repl(client *openai.Client) {
 			inputRequired = "function_call"
 			functionName = choice.Message.FunctionCall.Name
 			fmt.Printf("assistant: calling function %s\n", functionName)
-			//functionArgs = choice.Message.FunctionCall.Arguments
+			functionArgs = choice.Message.FunctionCall.Arguments
 		default:
 			fmt.Printf("assistant: %s\n", choice.Message.Content)
 			inputRequired = "user"
 		}
 	}
-}
-
-func s(str string) *string {
-	return &str
 }

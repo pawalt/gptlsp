@@ -9,6 +9,10 @@ import (
 )
 
 func main() {
+	runRepl()
+}
+
+func runRepl() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
