@@ -37,10 +37,9 @@ func repl(client *openai.Client) {
 		// model := openai.GPT3Dot5Turbo0613
 		model := openai.GPT40613
 		completions, err := createChatCompletion(client, model, messages, []*openai.FunctionDefine{
-			getTimeMetadata,
-			listFilesMetadata,
 			analyzeMetadata,
 			modifyFilesMetadata,
+			globFilesMetadata,
 		})
 		if err != nil {
 			log.Panicf("could not create completions %v", err)
@@ -82,6 +81,8 @@ func executeFunction(client *openai.Client, functionName string, functionArgs st
 		resp = Analyze(functionArgs, client, history)
 	case modifyFilesMetadata.Name:
 		resp = Modify(functionArgs, client, history)
+	case globFilesMetadata.Name:
+		resp = GlobFiles(functionArgs)
 	default:
 		log.Panicf("unrecognized function name %s", functionName)
 	}

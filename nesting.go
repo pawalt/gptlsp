@@ -104,7 +104,7 @@ var analyzeMetadata = &openai.FunctionDefine{
 		Properties: map[string]*openai.JSONSchemaDefine{
 			"instruction": {
 				Type:        openai.JSONSchemaTypeString,
-				Description: `Natural language description of what analysis to perform`,
+				Description: `JSON-escaped natural language description of what analysis to perform`,
 			},
 		},
 		Required: []string{"instruction"},
@@ -119,7 +119,7 @@ var modifyFilesMetadata = &openai.FunctionDefine{
 		Properties: map[string]*openai.JSONSchemaDefine{
 			"instruction": {
 				Type:        openai.JSONSchemaTypeString,
-				Description: `Natural language description of what modification to perform.\nThe instruction must contain specific instructions for what kind of modification to perform.`,
+				Description: `JSON-escaped natural language description of what modification to perform.\nThe instruction must contain specific instructions for what kind of modification to perform.`,
 			},
 		},
 		Required: []string{"instruction"},

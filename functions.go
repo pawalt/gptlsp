@@ -259,6 +259,40 @@ var writeFileMetadata = &openai.FunctionDefine{
 	},
 }
 
+type GlobFilesRequest struct {
+	Pattern string `json:"pattern,omitempty"`
+}
+
+func GlobFiles(raw string) map[string][]string {
+	var req GlobFilesRequest
+	_ = json.Unmarshal([]byte(raw), &req)
+	pattern := req.Pattern
+
+	matches, err := filepath.Glob(pattern)
+	if err != nil {
+		return map[string][]string{}
+	}
+
+	return map[string][]string{
+		"filepaths": matches,
+	}
+}
+
+var globFilesMetadata = &openai.FunctionDefine{
+	Name:        "glob_files",
+	Description: "Get a list of files matching the glob pattern",
+	Parameters: &openai.FunctionParams{
+		Type: openai.JSONSchemaTypeObject,
+		Properties: map[string]*openai.JSONSchemaDefine{
+			"pattern": {
+				Type:        openai.JSONSchemaTypeString,
+				Description: `Glob pattern to match files`,
+			},
+		},
+		Required: []string{"pattern"},
+	},
+}
+
 func e(err error) {
 	if err != nil {
 		log.Fatalln(err)
