@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -28,7 +27,7 @@ func repl(client *openai.Client) {
 				Content: scanner.Text(),
 			}
 		} else if inputRequired == "function_call" {
-			nextMessage = executeFunction(client, functionName, functionArgs)
+			nextMessage = executeFunction(client, functionName, functionArgs, messages)
 		} else {
 			log.Panicf("bad input required %s", inputRequired)
 		}
@@ -37,19 +36,12 @@ func repl(client *openai.Client) {
 
 		// model := openai.GPT3Dot5Turbo0613
 		model := openai.GPT40613
-		r := openai.ChatCompletionRequest{
-			Model:       model,
-			Messages:    messages,
-			Temperature: 0.7,
-			Functions: []*openai.FunctionDefine{
-				getTimeMetadata,
-				listFilesMetadata,
-				analyzeMetadata,
-				modifyFilesMetadata,
-			},
-		}
-
-		completions, err := client.CreateChatCompletion(context.Background(), r)
+		completions, err := createChatCompletion(client, model, messages, []*openai.FunctionDefine{
+			getTimeMetadata,
+			listFilesMetadata,
+			analyzeMetadata,
+			modifyFilesMetadata,
+		})
 		if err != nil {
 			log.Panicf("could not create completions %v", err)
 		}
@@ -75,7 +67,7 @@ func repl(client *openai.Client) {
 	}
 }
 
-func executeFunction(client *openai.Client, functionName string, functionArgs string) openai.ChatCompletionMessage {
+func executeFunction(client *openai.Client, functionName string, functionArgs string, history []openai.ChatCompletionMessage) openai.ChatCompletionMessage {
 	var resp any
 	switch functionName {
 	case getTimeMetadata.Name:
@@ -87,9 +79,9 @@ func executeFunction(client *openai.Client, functionName string, functionArgs st
 	case writeFileMetadata.Name:
 		resp = WriteFile(functionArgs)
 	case analyzeMetadata.Name:
-		resp = Analyze(functionArgs, client)
+		resp = Analyze(functionArgs, client, history)
 	case modifyFilesMetadata.Name:
-		resp = Modify(functionArgs, client)
+		resp = Modify(functionArgs, client, history)
 	default:
 		log.Panicf("unrecognized function name %s", functionName)
 	}

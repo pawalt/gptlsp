@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"log"
 
@@ -12,7 +11,13 @@ type Request struct {
 	Instruction string `json:"instruction,omitempty"`
 }
 
-func processRequest(raw string, client *openai.Client, systemMessage string, functionMetadata []*openai.FunctionDefine) map[string]string {
+func processRequest(
+	raw string,
+	client *openai.Client,
+	systemMessage string,
+	functionMetadata []*openai.FunctionDefine,
+	history []openai.ChatCompletionMessage,
+) map[string]string {
 	var req Request
 	_ = json.Unmarshal([]byte(raw), &req)
 	if req.Instruction == "" {
@@ -21,7 +26,7 @@ func processRequest(raw string, client *openai.Client, systemMessage string, fun
 		}
 	}
 
-	messages := []openai.ChatCompletionMessage{
+	messages := append(history, []openai.ChatCompletionMessage{
 		{
 			Role:    "system",
 			Content: systemMessage,
@@ -30,19 +35,12 @@ func processRequest(raw string, client *openai.Client, systemMessage string, fun
 			Role:    "user",
 			Content: req.Instruction,
 		},
-	}
+	}...)
 
 	done := false
 	for !done {
 		model := openai.GPT40613
-		r := openai.ChatCompletionRequest{
-			Model:       model,
-			Messages:    messages,
-			Temperature: 0.7,
-			Functions:   functionMetadata,
-		}
-
-		completions, err := client.CreateChatCompletion(context.Background(), r)
+		completions, err := createChatCompletion(client, model, messages, functionMetadata)
 		if err != nil {
 			log.Panicf("could not create completions %v", err)
 		}
@@ -61,6 +59,7 @@ func processRequest(raw string, client *openai.Client, systemMessage string, fun
 				client,
 				choice.Message.FunctionCall.Name,
 				choice.Message.FunctionCall.Arguments,
+				messages,
 			))
 		default:
 			done = true
@@ -72,21 +71,29 @@ func processRequest(raw string, client *openai.Client, systemMessage string, fun
 	}
 }
 
-func Analyze(raw string, client *openai.Client) map[string]string {
+func Analyze(raw string, client *openai.Client, history []openai.ChatCompletionMessage) map[string]string {
 	return processRequest(raw, client, "Use the functions available to you to answer the user's queries.", []*openai.FunctionDefine{
 		getTimeMetadata,
 		listFilesMetadata,
 		readFilesMetadata,
-	})
+	},
+		history,
+	)
 }
 
-func Modify(raw string, client *openai.Client) map[string]string {
-	return processRequest(raw, client, "Use the functions available to you to follow user's modification instructions.", []*openai.FunctionDefine{
-		getTimeMetadata,
-		listFilesMetadata,
-		readFilesMetadata,
-		writeFileMetadata,
-	})
+func Modify(raw string, client *openai.Client, history []openai.ChatCompletionMessage) map[string]string {
+	return processRequest(
+		raw,
+		client,
+		"Use the functions available to you to modify files according to the user's instructions. Your are allowed to read and write files.",
+		[]*openai.FunctionDefine{
+			getTimeMetadata,
+			listFilesMetadata,
+			readFilesMetadata,
+			writeFileMetadata,
+		},
+		history,
+	)
 }
 
 var analyzeMetadata = &openai.FunctionDefine{
