@@ -73,7 +73,6 @@ func processRequest(
 
 func Analyze(raw string, client *openai.Client, history []openai.ChatCompletionMessage) map[string]string {
 	return processRequest(raw, client, "Use the functions available to you to answer the user's queries.", []*openai.FunctionDefine{
-		getTimeMetadata,
 		listFilesMetadata,
 		readFilesMetadata,
 	},
@@ -87,7 +86,6 @@ func Modify(raw string, client *openai.Client, history []openai.ChatCompletionMe
 		client,
 		"Use the functions available to you to modify files according to the user's instructions. Your are allowed to read and write files.",
 		[]*openai.FunctionDefine{
-			getTimeMetadata,
 			listFilesMetadata,
 			readFilesMetadata,
 			writeFileMetadata,
