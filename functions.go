@@ -3,6 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"log"
 	"os"
 	"path/filepath"
@@ -313,6 +316,53 @@ var globFilesMetadata = &openai.FunctionDefine{
 			},
 		},
 		Required: []string{"pattern"},
+	},
+}
+
+// Request format for GetGoSymbols
+type GetGoSymbolsRequest struct {
+	FilePath string `json:"file_path,omitempty"`
+}
+
+// Function that gets Go symbols in a file
+func GetGoSymbols(raw string) ([]string, error) {
+	var req GetGoSymbolsRequest
+	_ = json.Unmarshal([]byte(raw), &req)
+	filepath := req.FilePath
+
+	fset := token.NewFileSet()
+	node, err := parser.ParseFile(fset, filepath, nil, parser.ParseComments)
+	if err != nil {
+		return nil, err
+	}
+
+	var symbols []string
+	ast.Inspect(node, func(n ast.Node) bool {
+		switch x := n.(type) {
+		case *ast.Ident:
+			if x.Obj != nil && x.Obj.Kind == ast.Var {
+				symbols = append(symbols, x.Name)
+			}
+		}
+		return true
+	})
+
+	return symbols, nil
+}
+
+// Metadata for GetGoSymbols
+var getGoSymbolsMetadata = &openai.FunctionDefine{
+	Name:        "get_go_symbols",
+	Description: "Get Go symbols in a file",
+	Parameters: &openai.FunctionParams{
+		Type: openai.JSONSchemaTypeObject,
+		Properties: map[string]*openai.JSONSchemaDefine{
+			"file_path": {
+				Type:        openai.JSONSchemaTypeString,
+				Description: `Relative path to the Go file`,
+			},
+		},
+		Required: []string{"file_path"},
 	},
 }
 
