@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/go-skynet/go-llama.cpp"
 	"log"
 	"os"
 
@@ -12,6 +13,12 @@ import (
 
 func repl(client *openai.Client) {
 	var messages []openai.ChatCompletionMessage
+
+	llamaModel := "./models/nous-hermes-13b.ggmlv3.q4_1.bin"
+	l, err := llama.New(llamaModel, llama.EnableF16Memory, llama.SetContext(2048), llama.EnableEmbeddings, llama.SetGPULayers(1))
+	if err != nil {
+		log.Panicf("Loading the model failed: %v", err)
+	}
 
 	scanner := bufio.NewScanner(os.Stdin)
 	inputRequired := "user"
@@ -27,7 +34,7 @@ func repl(client *openai.Client) {
 				Content: scanner.Text(),
 			}
 		} else if inputRequired == "function_call" {
-			nextMessage = executeFunction(client, functionName, functionArgs, messages)
+			nextMessage = executeFunction(client, functionName, functionArgs, messages, l)
 		} else {
 			log.Panicf("bad input required %s", inputRequired)
 		}
@@ -37,10 +44,9 @@ func repl(client *openai.Client) {
 		// model := openai.GPT3Dot5Turbo0613
 		model := openai.GPT40613
 		completions, err := createChatCompletion(client, model, messages, []*openai.FunctionDefine{
-			analyzeMetadata,
-			modifyFilesMetadata,
 			globFilesMetadata,
 			getGoSymbolsMetadata,
+			editFilesMetadata,
 		})
 		if err != nil {
 			log.Panicf("could not create completions %v", err)
@@ -67,7 +73,7 @@ func repl(client *openai.Client) {
 	}
 }
 
-func executeFunction(client *openai.Client, functionName string, functionArgs string, history []openai.ChatCompletionMessage) openai.ChatCompletionMessage {
+func executeFunction(client *openai.Client, functionName string, functionArgs string, history []openai.ChatCompletionMessage, llamaModel *llama.LLama) openai.ChatCompletionMessage {
 	var resp any
 	switch functionName {
 	case getTimeMetadata.Name:
@@ -86,6 +92,8 @@ func executeFunction(client *openai.Client, functionName string, functionArgs st
 		resp = GlobFiles(functionArgs)
 	case getGoSymbolsMetadata.Name:
 		resp = GetGoSymbols(functionArgs)
+	case editFilesMetadata.Name:
+		resp = EditFiles(functionArgs, llamaModel)
 	default:
 		log.Panicf("unrecognized function name %s", functionName)
 	}

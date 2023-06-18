@@ -60,6 +60,7 @@ func processRequest(
 				choice.Message.FunctionCall.Name,
 				choice.Message.FunctionCall.Arguments,
 				messages,
+				nil,
 			))
 		default:
 			done = true
