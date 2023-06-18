@@ -40,6 +40,7 @@ func repl(client *openai.Client) {
 			analyzeMetadata,
 			modifyFilesMetadata,
 			globFilesMetadata,
+			getGoSymbolsMetadata,
 		})
 		if err != nil {
 			log.Panicf("could not create completions %v", err)
@@ -83,6 +84,8 @@ func executeFunction(client *openai.Client, functionName string, functionArgs st
 		resp = Modify(functionArgs, client, history)
 	case globFilesMetadata.Name:
 		resp = GlobFiles(functionArgs)
+	case getGoSymbolsMetadata.Name:
+		resp = GetGoSymbols(functionArgs)
 	default:
 		log.Panicf("unrecognized function name %s", functionName)
 	}

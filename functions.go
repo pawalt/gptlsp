@@ -325,15 +325,17 @@ type GetGoSymbolsRequest struct {
 }
 
 // Function that gets Go symbols in a file
-func GetGoSymbols(raw string) ([]string, error) {
+func GetGoSymbols(raw string) map[string][]string {
 	var req GetGoSymbolsRequest
 	_ = json.Unmarshal([]byte(raw), &req)
-	filepath := req.FilePath
+	fp := req.FilePath
 
 	fset := token.NewFileSet()
-	node, err := parser.ParseFile(fset, filepath, nil, parser.ParseComments)
+	node, err := parser.ParseFile(fset, fp, nil, parser.ParseComments)
 	if err != nil {
-		return nil, err
+		return map[string][]string{
+			"error": {err.Error()},
+		}
 	}
 
 	var symbols []string
@@ -347,7 +349,9 @@ func GetGoSymbols(raw string) ([]string, error) {
 		return true
 	})
 
-	return symbols, nil
+	return map[string][]string{
+		"symbols": symbols,
+	}
 }
 
 // Metadata for GetGoSymbols
