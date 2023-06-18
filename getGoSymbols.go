@@ -31,7 +31,6 @@ func GetGoSymbols(raw string) map[string][]string {
 
 	var symbols []string
 	ast.Inspect(node, func(n ast.Node) bool {
-		if n != node && ast.Node(n).Parent() != node { return true }
 		switch x := n.(type) {
 		case *ast.GenDecl:
 			if x.Tok == token.VAR {
@@ -42,6 +41,7 @@ func GetGoSymbols(raw string) map[string][]string {
 			}
 		case *ast.FuncDecl:
 			symbols = append(symbols, x.Name.Name)
+			return false
 		}
 		return true
 	})
