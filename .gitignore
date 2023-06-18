@@ -1,3 +1,6 @@
 .env
 .idea
 gptlsp
+vendor
+ggml-metal.metal
+models

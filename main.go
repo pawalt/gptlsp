@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	runRepl()
+	runLocal()
 }
 
 func runRepl() {
