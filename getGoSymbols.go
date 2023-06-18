@@ -31,11 +31,17 @@ func GetGoSymbols(raw string) map[string][]string {
 
 	var symbols []string
 	ast.Inspect(node, func(n ast.Node) bool {
+		if n != node && ast.Node(n).Parent() != node { return true }
 		switch x := n.(type) {
-		case *ast.Ident:
-			if x.Obj != nil && x.Obj.Kind == ast.Var {
-				symbols = append(symbols, x.Name)
+		case *ast.GenDecl:
+			if x.Tok == token.VAR {
+				for _, spec := range x.Specs {
+					vspec := spec.(*ast.ValueSpec)
+					symbols = append(symbols, vspec.Names[0].Name) 
+				}
 			}
+		case *ast.FuncDecl:
+			symbols = append(symbols, x.Name.Name)
 		}
 		return true
 	})
