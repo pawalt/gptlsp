@@ -16,9 +16,12 @@ func repl(client *openai.Client) {
 
 	//hermesModel := "./models/nous-hermes-13b.ggmlv3.q4_1.bin"
 	//wizardLM := "./models/WizardLM-7B-uncensored.ggmlv3.q4_0.bin"
-	wizard134 := "./models/wizardLM-13B-Uncensored.ggmlv3.q4_1.bin"
+	// wizard134 := "./models/wizardLM-13B-Uncensored.ggmlv3.q4_1.bin"
+	// wizard134k := "./models/wizardLM-13B-Uncensored.ggmlv3.q4_K_M.bin"
+	// wizard135 := "./models/wizardLM-13B-Uncensored.ggmlv3.q5_1.bin"
+	wizard135k := "./models/wizardLM-13B-Uncensored.ggmlv3.q5_K_M.bin"
 	l, err := llama.New(
-		wizard134,
+		wizard135k,
 		llama.EnableF16Memory,
 		llama.SetContext(4096),
 		llama.SetGPULayers(1),
