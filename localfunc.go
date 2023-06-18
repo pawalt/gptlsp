@@ -40,17 +40,16 @@ func EditFiles(raw string, model *llama.LLama) map[string]string {
 	})
 
 	prompt := fmt.Sprintf(`### Instruction:
+
+%s
+
 Read the inputted file contents and output the new desired file contents
 according to the instructions:
 
 %s
 
-### Input
-
-%s
-
 ### Response
-`, req.Instructions, contents)
+`, contents, req.Instructions)
 
 	var resp string
 	_, err = model.Predict(prompt,
