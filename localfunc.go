@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"unicode"
 )
 
 type EditFilesRequest struct {
@@ -35,39 +34,36 @@ func EditFiles(raw string, model *llama.LLama) map[string]string {
 
 	contents, err := os.ReadFile(filePath)
 
-	words := strings.FieldsFunc(string(contents), func(r rune) bool {
-		return unicode.IsSpace(r) || unicode.IsPunct(r)
-	})
+	prompt := fmt.Sprintf(wizardLMFormat, contents, req.Instructions)
 
-	prompt := fmt.Sprintf(`### Instruction:
+	fmt.Println(prompt)
 
-%s
+	var fullResp string
 
-Read the inputted file contents and output the new desired file contents
-according to the instructions:
+	for len(fullResp) < len(contents) {
+		var resp string
+		_, err = model.Predict(prompt,
+			llama.Debug,
+			llama.SetTokenCallback(func(s string) bool {
+				fmt.Print(s)
+				resp += s
+				return true
+			}),
+			llama.SetTokens(len(contents)),
+			llama.SetThreads(runtime.NumCPU()),
+			llama.SetTopK(90),
+			llama.SetTopP(0.86),
+			llama.SetStopWords("llama"),
+		)
+		e(err)
 
-%s
+		resp = cleanRes(resp)
 
-### Response
-`, contents, req.Instructions)
+		fullResp += resp
+		prompt += resp
+	}
 
-	var resp string
-	_, err = model.Predict(prompt,
-		 llama.Debug,
-		 llama.SetTokenCallback(func(s string) bool {
-			fmt.Print(s)
-			resp += s
-			return true
-		}),
-		llama.SetTokens(len(words) + 256),
-		llama.SetThreads(runtime.NumCPU()),
-		llama.SetTopK(90),
-		llama.SetTopP(0.86),
-		llama.SetStopWords("llama"),
-	)
-	e(err)
-
-	err = os.WriteFile(filePath, []byte(resp), 0755)
+	err = os.WriteFile(filePath, []byte(fullResp), 0755)
 	e(err)
 
 	return map[string]string{
@@ -93,3 +89,43 @@ var editFilesMetadata = &openai.FunctionDefine{
 		Required: []string{"paths", "instructions"},
 	},
 }
+
+func cleanRes(in string) string {
+	if strings.Contains(in, "```") {
+		_, in, _ = strings.Cut(in, "```")
+		in, _, _ = strings.Cut(in, "```")
+		lines := strings.Split(in, "\n")
+		lines = lines[1:]
+		in = strings.Join(lines, "\n")
+	}
+
+	return in
+}
+
+const alpacaFormat = `### Instruction:
+
+%s
+
+Output the new file contents from the file above, modified using
+only the instructions below. Do not make any modifications other
+than what was specified in the instructions, and do not output
+any text other than the new file contents:
+
+%s
+
+### Response
+`
+
+const wizardLMFormat = `You are a helpful assistant.
+USER: 
+
+%s
+
+Output the new file contents from the file above, modified using
+only the instructions below. Do not make any modifications other
+than what was specified in the instructions, and do not output
+any text other than the new file contents:
+
+%s
+
+ASSISTANT:`

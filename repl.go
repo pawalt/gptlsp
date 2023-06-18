@@ -14,9 +14,15 @@ import (
 func repl(client *openai.Client) {
 	var messages []openai.ChatCompletionMessage
 
-	hermesModel := "./models/nous-hermes-13b.ggmlv3.q4_1.bin"
+	//hermesModel := "./models/nous-hermes-13b.ggmlv3.q4_1.bin"
 	//wizardLM := "./models/WizardLM-7B-uncensored.ggmlv3.q4_0.bin"
-	l, err := llama.New(hermesModel, llama.EnableF16Memory, llama.SetContext(2048), llama.EnableEmbeddings, llama.SetGPULayers(1))
+	wizard134 := "./models/wizardLM-13B-Uncensored.ggmlv3.q4_1.bin"
+	l, err := llama.New(
+		wizard134,
+		llama.EnableF16Memory,
+		llama.SetContext(4096),
+		llama.SetGPULayers(1),
+		)
 	if err != nil {
 		log.Panicf("Loading the model failed: %v", err)
 	}

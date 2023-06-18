@@ -1,3 +1,4 @@
+// Package main provides functions to interact with OpenAI's API.
 package main
 
 import (
@@ -9,13 +10,13 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
-
-
+// WriteFileRequest is a struct that specifies the parameters for writing to a file.
 type WriteFileRequest struct {
 	Path    string `json:"path,omitempty"`
 	Content string `json:"content,omitempty"`
 }
 
+// WriteFile writes content to a file at the given path.
 func WriteFile(raw string) map[string]any {
 	var req WriteFileRequest
 	_ = json.Unmarshal([]byte(raw), &req)
@@ -47,6 +48,7 @@ func WriteFile(raw string) map[string]any {
 	}
 }
 
+// writeFileMetadata is a function that defines the metadata for the WriteFile function.
 var writeFileMetadata = &openai.FunctionDefine{
 	Name:        "write_file",
 	Description: "Write to file at the given path",
