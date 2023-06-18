@@ -24,3 +24,9 @@ func runRepl() {
 
 	repl(client)
 }
+
+func e(err error) {
+	if err != nil {
+		log.Panic(err)
+	}
+}
