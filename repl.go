@@ -58,8 +58,9 @@ func repl(client *openai.Client) {
 		messages = append(messages, nextMessage)
 
 		completions, err := createChatCompletion(client, gpt4, messages, []*openai.FunctionDefine{
-			analyzeMetadata,
-			modifyFilesMetadata,
+			searchFilesMetadata,
+			refactorFilesMetadata,
+			compileMetadata,
 		})
 		if err != nil {
 			log.Panicf("could not create completions %v", err)
@@ -111,6 +112,8 @@ func executeFunction(client *openai.Client, functionName string, functionArgs st
 		resp = Refactor(functionArgs, client)
 	case searchFilesMetadata.Name:
 		resp = SearchFiles(functionArgs)
+	case compileMetadata.Name:
+		resp = Compile()
 	default:
 		log.Panicf("unrecognized function name %s", functionName)
 	}

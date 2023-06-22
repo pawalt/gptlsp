@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -25,7 +26,16 @@ func Refactor(raw string, client *openai.Client) map[string]any {
 		}
 	}
 
-	for _, fp := range req.Paths {
+	currDir, err := filepath.Abs(".")
+	e(err)
+	paths, err := cleanPaths(req.Paths, currDir)
+	if err != nil {
+		return map[string]any{
+			"error": err.Error(),
+		}
+	}
+
+	for _, fp := range paths {
 		content, err := os.ReadFile(fp)
 		e(err)
 
@@ -57,6 +67,8 @@ Instructions:
 
 		err = os.WriteFile(fp, []byte(choice.Message.Content), 0755)
 		e(err)
+
+		fmt.Printf("refactored %s\n", fp)
 	}
 
 	return map[string]any{
@@ -79,7 +91,7 @@ var refactorFilesMetadata = &openai.FunctionDefine{
 			},
 			"instructions": {
 				Type:        openai.JSONSchemaTypeString,
-				Description: `JSON-escaped instructions on how to perform the refactor`,
+				Description: `JSON-escaped natural language instructions on how to perform the refactor`,
 			},
 		},
 		Required: []string{"paths", "instructions"},
@@ -135,5 +147,33 @@ var searchFilesMetadata = &openai.FunctionDefine{
 			},
 		},
 		Required: []string{"term"},
+	},
+}
+
+func Compile() map[string]any {
+	cmd := exec.Command("make", "build")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return map[string]any{
+			"error": string(output),
+		}
+	}
+
+	return map[string]any{
+		"output": string(output),
+	}
+}
+
+var compileMetadata = &openai.FunctionDefine{
+	Name:        "compile",
+	Description: "Compile the function in the current directory",
+	Parameters: &openai.FunctionParams{
+		Type: openai.JSONSchemaTypeObject,
+		Properties: map[string]*openai.JSONSchemaDefine{
+			"dummy": {
+				Type: openai.JSONSchemaTypeNull,
+			},
+		},
+		Required: []string{},
 	},
 }
