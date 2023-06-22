@@ -4,11 +4,17 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/go-skynet/go-llama.cpp"
 	"log"
 	"os"
 
+	"github.com/go-skynet/go-llama.cpp"
+
 	"github.com/sashabaranov/go-openai"
+)
+
+const (
+	gpt3 = openai.GPT3Dot5Turbo0613
+	gpt4 = openai.GPT40613
 )
 
 func repl(client *openai.Client) {
@@ -19,16 +25,16 @@ func repl(client *openai.Client) {
 	// wizard134 := "./models/wizardLM-13B-Uncensored.ggmlv3.q4_1.bin"
 	// wizard134k := "./models/wizardLM-13B-Uncensored.ggmlv3.q4_K_M.bin"
 	// wizard135 := "./models/wizardLM-13B-Uncensored.ggmlv3.q5_1.bin"
-	wizard135k := "./models/wizardLM-13B-Uncensored.ggmlv3.q5_K_M.bin"
-	l, err := llama.New(
+	//wizard135k := "./models/wizardLM-13B-Uncensored.ggmlv3.q5_K_M.bin"
+	/*l, err := llama.New(
 		wizard135k,
 		llama.EnableF16Memory,
 		llama.SetContext(4096),
 		llama.SetGPULayers(1),
-		)
+	)
 	if err != nil {
 		log.Panicf("Loading the model failed: %v", err)
-	}
+	}*/
 
 	scanner := bufio.NewScanner(os.Stdin)
 	inputRequired := "user"
@@ -44,19 +50,16 @@ func repl(client *openai.Client) {
 				Content: scanner.Text(),
 			}
 		} else if inputRequired == "function_call" {
-			nextMessage = executeFunction(client, functionName, functionArgs, messages, l)
+			nextMessage = executeFunction(client, functionName, functionArgs, messages, nil)
 		} else {
 			log.Panicf("bad input required %s", inputRequired)
 		}
 
 		messages = append(messages, nextMessage)
 
-		// model := openai.GPT3Dot5Turbo0613
-		model := openai.GPT40613
-		completions, err := createChatCompletion(client, model, messages, []*openai.FunctionDefine{
-			globFilesMetadata,
-			getGoSymbolsMetadata,
-			editFilesMetadata,
+		completions, err := createChatCompletion(client, gpt4, messages, []*openai.FunctionDefine{
+			analyzeMetadata,
+			modifyFilesMetadata,
 		})
 		if err != nil {
 			log.Panicf("could not create completions %v", err)
@@ -104,6 +107,10 @@ func executeFunction(client *openai.Client, functionName string, functionArgs st
 		resp = GetGoSymbols(functionArgs)
 	case editFilesMetadata.Name:
 		resp = EditFiles(functionArgs, llamaModel)
+	case refactorFilesMetadata.Name:
+		resp = Refactor(functionArgs, client)
+	case searchFilesMetadata.Name:
+		resp = SearchFiles(functionArgs)
 	default:
 		log.Panicf("unrecognized function name %s", functionName)
 	}

@@ -39,8 +39,7 @@ func processRequest(
 
 	done := false
 	for !done {
-		model := openai.GPT40613
-		completions, err := createChatCompletion(client, model, messages, functionMetadata)
+		completions, err := createChatCompletion(client, gpt4, messages, functionMetadata)
 		if err != nil {
 			log.Panicf("could not create completions %v", err)
 		}
