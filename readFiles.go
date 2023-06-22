@@ -11,7 +11,6 @@ import (
 )
 
 
-
 type ReadFileRequest struct {
 	Paths []string `json:"paths,omitempty"`
 }
@@ -22,7 +21,11 @@ func ReadFiles(raw string) map[string]string {
 	filePaths := req.Paths
 
 	currDir, err := filepath.Abs(".")
-	e(err)
+	if err != nil {
+		return map[string]string{
+			"error": err.Error(),
+		}
+	}
 
 	cleanedPaths, err := cleanPaths(filePaths, currDir)
 	if err != nil {

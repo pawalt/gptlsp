@@ -17,27 +17,36 @@ type RefactorRequest struct {
 	Paths        []string `json:"paths,omitempty"`
 }
 
-func Refactor(raw string, client *openai.Client) map[string]any {
+func Refactor(raw string, client *openai.Client) map[string]interface{} {
 	var req RefactorRequest
 	_ = json.Unmarshal([]byte(raw), &req)
 	if req.Instructions == "" {
-		return map[string]any{
+		return map[string]interface{}{
 			"error": "instruction must be specified",
 		}
 	}
 
 	currDir, err := filepath.Abs(".")
-	e(err)
+	if err != nil {
+		return map[string]interface{}{
+			"error": err.Error(),
+		}
+	}
+
 	paths, err := cleanPaths(req.Paths, currDir)
 	if err != nil {
-		return map[string]any{
+		return map[string]interface{}{
 			"error": err.Error(),
 		}
 	}
 
 	for _, fp := range paths {
 		content, err := os.ReadFile(fp)
-		e(err)
+		if err != nil {
+			return map[string]interface{}{
+				"error": err.Error(),
+			}
+		}
 
 		messages := []openai.ChatCompletionMessage{
 			{
@@ -57,7 +66,11 @@ Instructions:
 		}
 
 		completions, err := createChatCompletion(client, gpt3, messages, []*openai.FunctionDefine{})
-		e(err)
+		if err != nil {
+			return map[string]interface{}{
+				"error": err.Error(),
+			}
+		}
 
 		if len(completions.Choices) != 1 {
 			log.Panicf("somehow not length 1 choices %v", completions.Choices)
@@ -66,12 +79,16 @@ Instructions:
 		choice := completions.Choices[0]
 
 		err = os.WriteFile(fp, []byte(choice.Message.Content), 0755)
-		e(err)
+		if err != nil {
+			return map[string]interface{}{
+				"error": err.Error(),
+			}
+		}
 
 		fmt.Printf("refactored %s\n", fp)
 	}
 
-	return map[string]any{
+	return map[string]interface{}{
 		"success": true,
 	}
 }
@@ -102,16 +119,24 @@ type SearchFilesRequest struct {
 	Term string `json:"term,omitempty"`
 }
 
-func SearchFiles(raw string) map[string]any {
+func SearchFiles(raw string) map[string]interface{} {
 	var req SearchFilesRequest
 	_ = json.Unmarshal([]byte(raw), &req)
 	searchTerm := req.Term
 
 	currDir, err := filepath.Abs(".")
-	e(err)
+	if err != nil {
+		return map[string]interface{}{
+			"error": err.Error(),
+		}
+	}
 
 	files, err := os.ReadDir(currDir)
-	e(err)
+	if err != nil {
+		return map[string]interface{}{
+			"error": err.Error(),
+		}
+	}
 
 	var output strings.Builder
 	for _, f := range files {
@@ -120,7 +145,11 @@ func SearchFiles(raw string) map[string]any {
 		}
 
 		content, err := os.ReadFile(filepath.Join(currDir, f.Name()))
-		e(err)
+		if err != nil {
+			return map[string]interface{}{
+				"error": err.Error(),
+			}
+		}
 
 		lines := strings.Split(string(content), "\n")
 		for i, line := range lines {
@@ -130,7 +159,7 @@ func SearchFiles(raw string) map[string]any {
 		}
 	}
 
-	return map[string]any{
+	return map[string]interface{}{
 		"matched_lines": output.String(),
 	}
 }
@@ -150,16 +179,16 @@ var searchFilesMetadata = &openai.FunctionDefine{
 	},
 }
 
-func Compile() map[string]any {
+func Compile() map[string]interface{} {
 	cmd := exec.Command("make", "build")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return map[string]any{
+		return map[string]interface{}{
 			"error": string(output),
 		}
 	}
 
-	return map[string]any{
+	return map[string]interface{}{
 		"output": string(output),
 	}
 }

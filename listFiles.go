@@ -10,8 +10,6 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
-
-
 type ListFilesRequest struct {
 	Directory  string `json:"directory,omitempty"`
 	MaxResults int    `json:"max_results,omitempty"`
@@ -26,7 +24,9 @@ func ListFiles(raw string) any {
 	dir := req.Directory
 
 	currDir, err := filepath.Abs(".")
-	e(err)
+	if err != nil {
+		return err
+	}
 
 	fullPaths, err := cleanPaths([]string{dir}, currDir)
 	if err != nil {
@@ -38,7 +38,9 @@ func ListFiles(raw string) any {
 	fullPath := fullPaths[0]
 
 	fileNames, directories, err := exploreDirectory(fullPath, currDir)
-	e(err)
+	if err != nil {
+		return err
+	}
 
 	// Recursively get directories until we run out of result size.
 	for len(directories) > 0 {
@@ -46,7 +48,9 @@ func ListFiles(raw string) any {
 		var newDirectories []string
 		for _, dirToExplore := range directories {
 			exploredFiles, exploredDirectories, err := exploreDirectory(dirToExplore, currDir)
-			e(err)
+			if err != nil {
+				return err
+			}
 
 			newFileNames = append(newFileNames, exploredFiles...)
 			newDirectories = append(newDirectories, exploredDirectories...)

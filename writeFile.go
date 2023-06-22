@@ -1,4 +1,3 @@
-// Package main provides functions to interact with OpenAI's API.
 package main
 
 import (
@@ -17,23 +16,27 @@ type WriteFileRequest struct {
 }
 
 // WriteFile writes content to a file at the given path.
-func WriteFile(raw string) map[string]any {
+func WriteFile(raw string) map[string]interface{} {
 	var req WriteFileRequest
 	_ = json.Unmarshal([]byte(raw), &req)
 	if req.Path == "" || req.Content == "" {
 		log.Printf("path: %s\n", req.Path)
 		log.Printf("content: %s\n", req.Content)
-		return map[string]any{
+		return map[string]interface{}{
 			"error": "must provide path and content",
 		}
 	}
 
 	currDir, err := filepath.Abs(".")
-	e(err)
+	if err != nil {
+		return map[string]interface{}{
+			"error": err.Error(),
+		}
+	}
 
 	fullPaths, err := cleanPaths([]string{req.Path}, currDir)
 	if err != nil {
-		return map[string]any{
+		return map[string]interface{}{
 			"error": err.Error(),
 		}
 	}
@@ -41,9 +44,13 @@ func WriteFile(raw string) map[string]any {
 	fullPath := fullPaths[0]
 
 	err = os.WriteFile(fullPath, []byte(req.Content), 0755)
-	e(err)
+	if err != nil {
+		return map[string]interface{}{
+			"error": err.Error(),
+		}
+	}
 
-	return map[string]any{
+	return map[string]interface{}{
 		"success": true,
 	}
 }

@@ -3,17 +3,18 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-skynet/go-llama.cpp"
-	"github.com/sashabaranov/go-openai"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/go-skynet/go-llama.cpp"
+	"github.com/sashabaranov/go-openai"
 )
 
 type EditFilesRequest struct {
 	Instructions string `json:"instructions,omitempty"`
-	Path string `json:"path,omitempty"`
+	Path         string `json:"path,omitempty"`
 }
 
 func EditFiles(raw string, model *llama.LLama) map[string]string {
@@ -23,7 +24,11 @@ func EditFiles(raw string, model *llama.LLama) map[string]string {
 	filePath := req.Path
 
 	currDir, err := filepath.Abs(".")
-	e(err)
+	if err != nil {
+		return map[string]string{
+			"error": err.Error(),
+		}
+	}
 
 	_, err = cleanPaths([]string{filePath}, currDir)
 	if err != nil {
@@ -55,7 +60,11 @@ func EditFiles(raw string, model *llama.LLama) map[string]string {
 			llama.SetTopP(0.86),
 			llama.SetStopWords("llama"),
 		)
-		e(err)
+		if err != nil {
+			return map[string]string{
+				"error": err.Error(),
+			}
+		}
 
 		resp = cleanRes(resp)
 
@@ -64,7 +73,11 @@ func EditFiles(raw string, model *llama.LLama) map[string]string {
 	}
 
 	err = os.WriteFile(filePath, []byte(fullResp), 0755)
-	e(err)
+	if err != nil {
+		return map[string]string{
+			"error": err.Error(),
+		}
+	}
 
 	return map[string]string{
 		"success": "true",
@@ -82,7 +95,7 @@ var editFilesMetadata = &openai.FunctionDefine{
 				Description: `Relative path to the file to read and write`,
 			},
 			"instructions": {
-				Type: openai.JSONSchemaTypeString,
+				Type:        openai.JSONSchemaTypeString,
 				Description: "JSON-escaped natural language instructions for what modifications to perform on the files.",
 			},
 		},
