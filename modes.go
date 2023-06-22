@@ -1,5 +1,3 @@
-// The code can be refactored as follows:
-
 package main
 
 import (

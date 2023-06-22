@@ -56,7 +56,8 @@ func Refactor(raw string, client *openai.Client) map[string]interface{} {
 				Role: "system",
 				Content: fmt.Sprintf(`You are an expert refactoring bot. You should refactor
 the provided Go code according to the following instructions, and you should only
-respond with the refactored code with no decoration text.
+respond with the refactored code with no decoration text. Do not include a description
+or markdown comment blocks.
  
 Instructions:
 %s`, req.Instructions),
