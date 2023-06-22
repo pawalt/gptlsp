@@ -8,14 +8,12 @@ import (
 	"go/token"
 )
 
-
-
-// Request format for GetGoSymbols
+// GetGoSymbolsRequest defines the request format for GetGoSymbols function
 type GetGoSymbolsRequest struct {
 	FilePath string `json:"file_path,omitempty"`
 }
 
-// Function that gets Go symbols in a file
+// GetGoSymbols gets Go symbols in a file
 func GetGoSymbols(raw string) map[string][]string {
 	var req GetGoSymbolsRequest
 	_ = json.Unmarshal([]byte(raw), &req)
@@ -51,7 +49,7 @@ func GetGoSymbols(raw string) map[string][]string {
 	}
 }
 
-// Metadata for GetGoSymbols
+// getGoSymbolsMetadata defines metadata for GetGoSymbols function
 var getGoSymbolsMetadata = &openai.FunctionDefine{
 	Name:        "get_go_symbols",
 	Description: "Get Go symbols in a file",

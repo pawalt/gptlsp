@@ -4,14 +4,13 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"github.com/go-skynet/go-llama.cpp"
 	"io"
 	"log"
 	"os"
 	"runtime"
 	"strings"
 
-
+	"github.com/go-skynet/go-llama.cpp"
 )
 
 var (
@@ -19,12 +18,20 @@ var (
 	tokens  = 128
 )
 
+// runLocal is the main function that runs the program locally.
 func runLocal() {
 	var model string
 
+	// Create a new flag set.
 	flags := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+
+	// Define the model flag with a default value and description.
 	flags.StringVar(&model, "m", "./models/7B/ggml-model-q4_0.bin", "path to q4_0.bin model file to load")
+
+	// Define the threads flag with a default value and description.
 	flags.IntVar(&threads, "t", runtime.NumCPU(), "number of threads to use during computation")
+
+	// Define the tokens flag with a default value and description.
 	flags.IntVar(&tokens, "n", 256, "number of tokens to predict")
 
 	err := flags.Parse(os.Args[1:])
@@ -32,6 +39,8 @@ func runLocal() {
 		fmt.Printf("Parsing program arguments failed: %s", err)
 		os.Exit(1)
 	}
+
+	// Load the model with the specified options.
 	l, err := llama.New(model, llama.EnableF16Memory, llama.SetContext(128), llama.EnableEmbeddings, llama.SetGPULayers(1))
 	if err != nil {
 		fmt.Println("Loading the model failed:", err.Error())
@@ -51,6 +60,7 @@ func runLocal() {
 		if err != nil {
 			log.Panic(err)
 		}
+
 		embeds, err := l.Embeddings(text)
 		if err != nil {
 			fmt.Printf("Embeddings: error %s \n", err.Error())

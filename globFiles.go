@@ -3,16 +3,18 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/sashabaranov/go-openai"
 	"path/filepath"
 	"strings"
+
+	"github.com/sashabaranov/go-openai"
 )
 
-
+// GlobFilesRequest represents the request structure for the GlobFiles function.
 type GlobFilesRequest struct {
 	Pattern string `json:"pattern,omitempty"`
 }
 
+// GlobFiles takes a raw string and returns a map of filepaths that match the given pattern.
 func GlobFiles(raw string) map[string][]string {
 	var req GlobFilesRequest
 	_ = json.Unmarshal([]byte(raw), &req)
@@ -51,6 +53,7 @@ func GlobFiles(raw string) map[string][]string {
 	}
 }
 
+// globFilesMetadata provides metadata for the globFiles function.
 var globFilesMetadata = &openai.FunctionDefine{
 	Name:        "glob_files",
 	Description: "Get a list of files matching the glob pattern",

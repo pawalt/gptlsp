@@ -1,3 +1,5 @@
+// The code can be refactored as follows:
+
 package main
 
 import (
@@ -7,11 +9,13 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
+// Define the functions for refactoring and coding
 var refactoringFunctions = []*openai.FunctionDefine{
 	searchFilesMetadata,
 	refactorFilesMetadata,
 	compileMetadata,
 	switchModeMetadata,
+	globFilesMetadata,
 }
 
 var codingFunctions = []*openai.FunctionDefine{
@@ -21,15 +25,17 @@ var codingFunctions = []*openai.FunctionDefine{
 	switchModeMetadata,
 }
 
+// Define the SwitchModeRequest struct
 type SwitchModeRequest struct {
 	Mode string `json:"mode,omitempty"`
 }
 
-func SwitchMode(raw string) map[string]any {
+// SwitchMode function switches the mode of operation for the agent
+func SwitchMode(raw string) map[string]interface{} {
 	var req SwitchModeRequest
 	_ = json.Unmarshal([]byte(raw), &req)
 	if req.Mode == "" {
-		return map[string]any{
+		return map[string]interface{}{
 			"error": "must provide a mode",
 		}
 	}
@@ -40,16 +46,17 @@ func SwitchMode(raw string) map[string]any {
 	case "code":
 		activeFunctions = codingFunctions
 	default:
-		return map[string]any{
+		return map[string]interface{}{
 			"error": fmt.Sprintf("unrecognized mode: %s", req.Mode),
 		}
 	}
 
-	return map[string]any{
+	return map[string]interface{}{
 		"success": true,
 	}
 }
 
+// Define the switch mode metadata
 var switchModeMetadata = &openai.FunctionDefine{
 	Name:        "switch_mode",
 	Description: "Switch the agent's mode of operation",

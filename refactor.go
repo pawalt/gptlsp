@@ -12,11 +12,14 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
+// RefactorRequest represents the request body for the Refactor function.
 type RefactorRequest struct {
-	Instructions string   `json:"instructions,omitempty"`
-	Paths        []string `json:"paths,omitempty"`
+	Instructions string   `json:"instructions,omitempty"` // Instructions for refactoring
+	Paths        []string `json:"paths,omitempty"`        // Paths of files to refactor
 }
 
+// Refactor refactors the specified files according to the provided instructions.
+// It returns a map with the result of the refactoring process.
 func Refactor(raw string, client *openai.Client) map[string]interface{} {
 	var req RefactorRequest
 	_ = json.Unmarshal([]byte(raw), &req)
@@ -93,6 +96,7 @@ Instructions:
 	}
 }
 
+// refactorFilesMetadata is the metadata for the refactor_files function.
 var refactorFilesMetadata = &openai.FunctionDefine{
 	Name:        "refactor_files",
 	Description: "Refactor files at the given paths",
@@ -115,10 +119,13 @@ var refactorFilesMetadata = &openai.FunctionDefine{
 	},
 }
 
+// SearchFilesRequest represents the request body for the SearchFiles function.
 type SearchFilesRequest struct {
-	Term string `json:"term,omitempty"`
+	Term string `json:"term,omitempty"` // Term to search for inside files
 }
 
+// SearchFiles searches for the specified term in all the files in the current directory.
+// It returns a map with the matched lines.
 func SearchFiles(raw string) map[string]interface{} {
 	var req SearchFilesRequest
 	_ = json.Unmarshal([]byte(raw), &req)
@@ -164,6 +171,7 @@ func SearchFiles(raw string) map[string]interface{} {
 	}
 }
 
+// searchFilesMetadata is the metadata for the search_files function.
 var searchFilesMetadata = &openai.FunctionDefine{
 	Name:        "search_files",
 	Description: "Search for a term in all the files in the current directory",
@@ -172,13 +180,15 @@ var searchFilesMetadata = &openai.FunctionDefine{
 		Properties: map[string]*openai.JSONSchemaDefine{
 			"term": {
 				Type:        openai.JSONSchemaTypeString,
-				Description: `Term to search for`,
+				Description: `string to search for inside files`,
 			},
 		},
 		Required: []string{"term"},
 	},
 }
 
+// Compile compiles the function in the current directory using the "make build" command.
+// It returns a map with the compilation output.
 func Compile() map[string]interface{} {
 	cmd := exec.Command("make", "build")
 	output, err := cmd.CombinedOutput()
@@ -193,6 +203,7 @@ func Compile() map[string]interface{} {
 	}
 }
 
+// compileMetadata is the metadata for the compile function.
 var compileMetadata = &openai.FunctionDefine{
 	Name:        "compile",
 	Description: "Compile the function in the current directory",

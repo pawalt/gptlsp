@@ -10,11 +10,12 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
-
+// ReadFileRequest represents the request structure for reading files.
 type ReadFileRequest struct {
 	Paths []string `json:"paths,omitempty"`
 }
 
+// ReadFiles reads the files based on the provided request.
 func ReadFiles(raw string) map[string]string {
 	var req ReadFileRequest
 	_ = json.Unmarshal([]byte(raw), &req)
@@ -52,6 +53,7 @@ func ReadFiles(raw string) map[string]string {
 	return ret
 }
 
+// cleanPaths cleans the paths and ensures they are valid.
 func cleanPaths(paths []string, root string) ([]string, error) {
 	var ret []string
 	for _, fp := range paths {

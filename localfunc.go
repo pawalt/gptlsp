@@ -12,17 +12,20 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
+// EditFilesRequest represents the request structure for editing files.
 type EditFilesRequest struct {
 	Instructions string `json:"instructions,omitempty"`
 	Path         string `json:"path,omitempty"`
 }
 
+// EditFiles takes a raw string and a llama model and performs file editing.
 func EditFiles(raw string, model *llama.LLama) map[string]string {
 	fmt.Println(raw)
 	var req EditFilesRequest
 	_ = json.Unmarshal([]byte(raw), &req)
 	filePath := req.Path
 
+	// Get the current directory path
 	currDir, err := filepath.Abs(".")
 	if err != nil {
 		return map[string]string{
@@ -30,6 +33,7 @@ func EditFiles(raw string, model *llama.LLama) map[string]string {
 		}
 	}
 
+	// Clean the file path
 	_, err = cleanPaths([]string{filePath}, currDir)
 	if err != nil {
 		return map[string]string{
@@ -37,14 +41,17 @@ func EditFiles(raw string, model *llama.LLama) map[string]string {
 		}
 	}
 
+	// Read the file contents
 	contents, err := os.ReadFile(filePath)
 
+	// Create the prompt for the llama model
 	prompt := fmt.Sprintf(wizardLMFormat, contents, req.Instructions)
 
 	fmt.Println(prompt)
 
 	var fullResp string
 
+	// Loop until the full response is generated
 	for len(fullResp) < len(contents) {
 		var resp string
 		_, err = model.Predict(prompt,
@@ -72,6 +79,7 @@ func EditFiles(raw string, model *llama.LLama) map[string]string {
 		prompt += resp
 	}
 
+	// Write the new file contents
 	err = os.WriteFile(filePath, []byte(fullResp), 0755)
 	if err != nil {
 		return map[string]string{
@@ -82,6 +90,19 @@ func EditFiles(raw string, model *llama.LLama) map[string]string {
 	return map[string]string{
 		"success": "true",
 	}
+}
+
+// cleanRes cleans the response by removing unnecessary text.
+func cleanRes(in string) string {
+	if strings.Contains(in, "```") {
+		_, in, _ = strings.Cut(in, "```")
+		in, _, _ = strings.Cut(in, "```")
+		lines := strings.Split(in, "\n")
+		lines = lines[1:]
+		in = strings.Join(lines, "\n")
+	}
+
+	return in
 }
 
 var editFilesMetadata = &openai.FunctionDefine{
@@ -101,18 +122,6 @@ var editFilesMetadata = &openai.FunctionDefine{
 		},
 		Required: []string{"paths", "instructions"},
 	},
-}
-
-func cleanRes(in string) string {
-	if strings.Contains(in, "```") {
-		_, in, _ = strings.Cut(in, "```")
-		in, _, _ = strings.Cut(in, "```")
-		lines := strings.Split(in, "\n")
-		lines = lines[1:]
-		in = strings.Join(lines, "\n")
-	}
-
-	return in
 }
 
 const alpacaFormat = `### Instruction:

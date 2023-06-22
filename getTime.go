@@ -2,9 +2,11 @@ package main
 
 import (
 	"time"
+
 	"github.com/sashabaranov/go-openai"
 )
 
+// GetTime retrieves the current time and returns it in a map
 func GetTime() map[string]string {
 	return map[string]string{
 		"time": time.Now().String(),

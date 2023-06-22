@@ -10,12 +10,15 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
+// ListFilesRequest is a struct that represents the request to list files.
 type ListFilesRequest struct {
-	Directory  string `json:"directory,omitempty"`
-	MaxResults int    `json:"max_results,omitempty"`
+	Directory  string `json:"directory,omitempty"` // Relative path to list files from (default: ".")
+	MaxResults int    `json:"max_results,omitempty"` // Maximum number of subtree results to show (default: "20")
 }
 
-func ListFiles(raw string) any {
+// ListFiles is a function that lists files based on the provided request.
+// It takes a raw JSON string as input and returns a map containing the filepaths.
+func ListFiles(raw string) map[string][]string {
 	req := ListFilesRequest{
 		Directory:  ".",
 		MaxResults: 20,
@@ -25,13 +28,15 @@ func ListFiles(raw string) any {
 
 	currDir, err := filepath.Abs(".")
 	if err != nil {
-		return err
+		return map[string][]string{
+			"error": []string{err.Error()},
+		}
 	}
 
 	fullPaths, err := cleanPaths([]string{dir}, currDir)
 	if err != nil {
-		return map[string]string{
-			"error": err.Error(),
+		return map[string][]string{
+			"error": []string{err.Error()},
 		}
 	}
 
@@ -39,7 +44,9 @@ func ListFiles(raw string) any {
 
 	fileNames, directories, err := exploreDirectory(fullPath, currDir)
 	if err != nil {
-		return err
+		return map[string][]string{
+			"error": []string{err.Error()},
+		}
 	}
 
 	// Recursively get directories until we run out of result size.
@@ -49,7 +56,9 @@ func ListFiles(raw string) any {
 		for _, dirToExplore := range directories {
 			exploredFiles, exploredDirectories, err := exploreDirectory(dirToExplore, currDir)
 			if err != nil {
-				return err
+				return map[string][]string{
+					"error": []string{err.Error()},
+				}
 			}
 
 			newFileNames = append(newFileNames, exploredFiles...)
@@ -71,6 +80,7 @@ func ListFiles(raw string) any {
 	}
 }
 
+// exploreDirectory is a helper function that explores a directory and returns the file names and directories.
 func exploreDirectory(dir string, root string) ([]string, []string, error) {
 	relativeBase := strings.TrimPrefix(dir, root)
 	relativeBase = strings.TrimPrefix(relativeBase, "/")

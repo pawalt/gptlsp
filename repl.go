@@ -1,3 +1,4 @@
+// Package main is the main package of the program.
 package main
 
 import (
@@ -19,6 +20,7 @@ const (
 
 var activeFunctions = refactoringFunctions
 
+// repl is the main read-eval-print loop function.
 func repl(client *openai.Client) {
 	var messages []openai.ChatCompletionMessage
 
@@ -85,6 +87,7 @@ func repl(client *openai.Client) {
 	}
 }
 
+// executeFunction executes the specified function with the given arguments.
 func executeFunction(client *openai.Client, functionName string, functionArgs string, history []openai.ChatCompletionMessage, llamaModel *llama.LLama) openai.ChatCompletionMessage {
 	var resp any
 	switch functionName {
