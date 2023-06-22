@@ -17,6 +17,8 @@ const (
 	gpt4 = openai.GPT40613
 )
 
+var activeFunctions = refactoringFunctions
+
 func repl(client *openai.Client) {
 	var messages []openai.ChatCompletionMessage
 
@@ -57,11 +59,7 @@ func repl(client *openai.Client) {
 
 		messages = append(messages, nextMessage)
 
-		completions, err := createChatCompletion(client, gpt4, messages, []*openai.FunctionDefine{
-			searchFilesMetadata,
-			refactorFilesMetadata,
-			compileMetadata,
-		})
+		completions, err := createChatCompletion(client, gpt4, messages, activeFunctions)
 		if err != nil {
 			log.Panicf("could not create completions %v", err)
 		}
@@ -114,6 +112,8 @@ func executeFunction(client *openai.Client, functionName string, functionArgs st
 		resp = SearchFiles(functionArgs)
 	case compileMetadata.Name:
 		resp = Compile()
+	case switchModeMetadata.Name:
+		resp = SwitchMode(functionArgs)
 	default:
 		log.Panicf("unrecognized function name %s", functionName)
 	}
