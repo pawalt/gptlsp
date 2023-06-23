@@ -10,14 +10,11 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
-// ListFilesRequest is a struct that represents the request to list files.
 type ListFilesRequest struct {
-	Directory  string `json:"directory,omitempty"` // Relative path to list files from (default: ".")
-	MaxResults int    `json:"max_results,omitempty"` // Maximum number of subtree results to show (default: "20")
+	Directory  string `json:"directory,omitempty"`
+	MaxResults int    `json:"max_results,omitempty"`
 }
 
-// ListFiles is a function that lists files based on the provided request.
-// It takes a raw JSON string as input and returns a map containing the filepaths.
 func ListFiles(raw string) map[string][]string {
 	req := ListFilesRequest{
 		Directory:  ".",
@@ -49,7 +46,6 @@ func ListFiles(raw string) map[string][]string {
 		}
 	}
 
-	// Recursively get directories until we run out of result size.
 	for len(directories) > 0 {
 		var newFileNames []string
 		var newDirectories []string
@@ -80,7 +76,6 @@ func ListFiles(raw string) map[string][]string {
 	}
 }
 
-// exploreDirectory is a helper function that explores a directory and returns the file names and directories.
 func exploreDirectory(dir string, root string) ([]string, []string, error) {
 	relativeBase := strings.TrimPrefix(dir, root)
 	relativeBase = strings.TrimPrefix(relativeBase, "/")

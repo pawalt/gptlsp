@@ -24,21 +24,6 @@ var activeMode = "refactor"
 func repl(client *openai.Client) {
 	var messages []openai.ChatCompletionMessage
 
-	//hermesModel := "./models/nous-hermes-13b.ggmlv3.q4_1.bin"
-	//wizardLM := "./models/WizardLM-7B-uncensored.ggmlv3.q4_0.bin"
-	// wizard134k := "./models/wizardLM-13B-Uncensored.ggmlv3.q4_K_M.bin"
-	// wizard135 := "./models/wizardLM-13B-Uncensored.ggmlv3.q5_1.bin"
-	//wizard135k := "./models/wizardLM-13B-Uncensored.ggmlv3.q5_K_M.bin"
-	/*l, err := llama.New(
-		wizard135k,
-		llama.EnableF16Memory,
-		llama.SetContext(4096),
-		llama.SetGPULayers(1),
-	)
-	if err != nil {
-		log.Panicf("Loading the model failed: %v", err)
-	}*/
-
 	scanner := bufio.NewScanner(os.Stdin)
 	inputRequired := "user"
 	functionName := ""

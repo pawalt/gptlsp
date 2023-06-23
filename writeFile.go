@@ -9,13 +9,11 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
-// WriteFileRequest is a struct that specifies the parameters for writing to a file.
 type WriteFileRequest struct {
-	Path    string `json:"path,omitempty"`    // Path is the relative path to the file to write to.
-	Content string `json:"content,omitempty"` // Content is the JSON-escaped content to write to the file.
+	Path    string `json:"path,omitempty"`
+	Content string `json:"content,omitempty"`
 }
 
-// WriteFile writes content to a file at the given path.
 func WriteFile(raw string) map[string]interface{} {
 	var req WriteFileRequest
 	_ = json.Unmarshal([]byte(raw), &req)
@@ -55,7 +53,6 @@ func WriteFile(raw string) map[string]interface{} {
 	}
 }
 
-// writeFileMetadata is a variable that holds the metadata for the WriteFile function.
 var writeFileMetadata = &openai.FunctionDefine{
 	Name:        "write_file",
 	Description: "Write to file at the given path",
