@@ -68,6 +68,6 @@ var writeFileMetadata = &openai.FunctionDefine{
 				Description: `JSON-escaped content to write to the file`,
 			},
 		},
-		Required: []string{"path"},
+		Required: []string{"path", "content"},
 	},
 }

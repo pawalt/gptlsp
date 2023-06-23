@@ -22,7 +22,13 @@ var activeMode = "refactor"
 
 // repl is the main read-eval-print loop function.
 func repl(client *openai.Client) {
-	var messages []openai.ChatCompletionMessage
+	messages := []openai.ChatCompletionMessage{
+		{
+			Role: "system",
+			Content: fmt.Sprintf(`You are a helpful AI coding assistant. You are currently in %s mode.
+Follow the user's instructions and use the available tools.`, activeMode),
+		},
+	}
 
 	scanner := bufio.NewScanner(os.Stdin)
 	inputRequired := "user"
@@ -116,8 +122,12 @@ func executeFunction(client *openai.Client, functionName string, functionArgs st
 	if len(humanReadable) > truncateLen {
 		humanReadable = humanReadable[:truncateLen] + "..."
 	}
+	humanReadableArgs := functionArgs
+	if len(humanReadableArgs) > truncateLen {
+		humanReadableArgs = humanReadableArgs[:truncateLen] + "..."
+	}
 
-	fmt.Printf("%s(%s): %s\n", functionName, functionArgs, humanReadable)
+	fmt.Printf("%s(%s): %s\n", functionName, humanReadableArgs, humanReadable)
 
 	return openai.ChatCompletionMessage{
 		Role:    "function",
