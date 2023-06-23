@@ -138,7 +138,7 @@ any text other than the new file contents:
 ### Response
 `
 
-const wizardLMFormat = `You are a helpful assistant.
+const wizardLMFormat = `
 USER: 
 
 %s
@@ -150,4 +150,5 @@ any text other than the new file contents:
 
 %s
 
-ASSISTANT:`
+ASSISTANT:
+`

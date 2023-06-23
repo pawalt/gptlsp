@@ -2,9 +2,7 @@ package main
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"runtime"
@@ -14,34 +12,40 @@ import (
 )
 
 var (
-	threads = 2048
-	tokens  = 128
+	threads = runtime.NumCPU()
 )
+
+const (
+	wizard134  = "./models/wizardLM-13B-Uncensored.ggmlv3.q4_1.bin"
+	wizard74   = "./models/wizardLM-7B.ggmlv3.q4_1.bin"
+	nousHermes = "./models/nous-hermes-13b.ggmlv3.q4_1.bin"
+)
+
+const wizardBaseFormat = `
+USER: %s
+ASSISTANT:
+`
+
+const alpacaBaseFormat = `### Instruction:
+
+You are chatbot who has sent the following messages:
+%s
+
+The user has asked you the following.
+
+%s
+### Response:
+AI: `
+
+type msg struct {
+	role    string
+	content string
+}
 
 // runLocal is the main function that runs the program locally.
 func runLocal() {
-	var model string
-
-	// Create a new flag set.
-	flags := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-
-	// Define the model flag with a default value and description.
-	flags.StringVar(&model, "m", "./models/7B/ggml-model-q4_0.bin", "path to q4_0.bin model file to load")
-
-	// Define the threads flag with a default value and description.
-	flags.IntVar(&threads, "t", runtime.NumCPU(), "number of threads to use during computation")
-
-	// Define the tokens flag with a default value and description.
-	flags.IntVar(&tokens, "n", 256, "number of tokens to predict")
-
-	err := flags.Parse(os.Args[1:])
-	if err != nil {
-		fmt.Printf("Parsing program arguments failed: %s", err)
-		os.Exit(1)
-	}
-
 	// Load the model with the specified options.
-	l, err := llama.New(model, llama.EnableF16Memory, llama.SetContext(128), llama.EnableEmbeddings, llama.SetGPULayers(1))
+	l, err := llama.New(nousHermes, llama.EnableF16Memory, llama.SetContext(2048), llama.SetGPULayers(1))
 	if err != nil {
 		fmt.Println("Loading the model failed:", err.Error())
 		os.Exit(1)
@@ -50,49 +54,48 @@ func runLocal() {
 
 	reader := bufio.NewReader(os.Stdin)
 
+	var history []msg
 	for {
-		text := readMultiLineInput(reader)
+		textMessages := ""
+		for _, m := range history {
+			textMessages += fmt.Sprintf("%s: %s\n", strings.ToUpper(m.role), m.content)
+		}
 
-		_, err := l.Predict(text, llama.Debug, llama.SetTokenCallback(func(token string) bool {
-			fmt.Print(token)
-			return true
-		}), llama.SetTokens(tokens), llama.SetThreads(threads), llama.SetTopK(90), llama.SetTopP(0.86), llama.SetStopWords("llama"))
+		input, err := readInput(reader)
 		if err != nil {
 			log.Panic(err)
 		}
 
-		embeds, err := l.Embeddings(text)
+		text := fmt.Sprintf(alpacaBaseFormat, textMessages, input)
+
+		history = append(history, msg{
+			role:    "user",
+			content: strings.TrimSpace(input),
+		})
+
+		resp, err := l.Predict(text, llama.Debug, llama.SetTokenCallback(func(token string) bool {
+			fmt.Print(token)
+			return true
+		}), llama.SetTokens(256), llama.SetThreads(threads), llama.SetTopK(90), llama.SetTopP(0.86), llama.SetStopWords("llama"))
 		if err != nil {
-			fmt.Printf("Embeddings: error %s \n", err.Error())
+			log.Panic(err)
 		}
-		fmt.Printf("Embeddings: %v", embeds)
+		history = append(history, msg{
+			role:    "AI: ",
+			content: resp,
+		})
+
 		fmt.Printf("\n\n")
 	}
 }
 
-// readMultiLineInput reads input until an empty line is entered.
-func readMultiLineInput(reader *bufio.Reader) string {
-	var lines []string
-	fmt.Print(">>> ")
-
-	for {
-		line, err := reader.ReadString('\n')
-		if err != nil {
-			if err == io.EOF {
-				os.Exit(0)
-			}
-			fmt.Printf("Reading the prompt failed: %s", err)
-			os.Exit(1)
-		}
-
-		if len(strings.TrimSpace(line)) == 0 {
-			break
-		}
-
-		lines = append(lines, line)
+// readInput reads input until an empty line is entered.
+func readInput(reader *bufio.Reader) (string, error) {
+	fmt.Print("user: ")
+	line, err := reader.ReadString('\n')
+	if err != nil {
+		return "", err
 	}
 
-	text := strings.Join(lines, "")
-	fmt.Println("Sending", text)
-	return text
+	return line, nil
 }
