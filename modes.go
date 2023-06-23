@@ -11,14 +11,14 @@ import (
 var refactoringFunctions = []*openai.FunctionDefine{
 	searchFilesMetadata,
 	refactorFilesMetadata,
-	compileMetadata,
-	switchModeMetadata,
 	globFilesMetadata,
+	switchModeMetadata,
 }
 
 var codingFunctions = []*openai.FunctionDefine{
 	searchFilesMetadata,
 	modifyFilesMetadata,
+	globFilesMetadata,
 	compileMetadata,
 	switchModeMetadata,
 }
