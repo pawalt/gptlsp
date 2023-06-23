@@ -10,7 +10,7 @@ import (
 
 // main is the entry point of the program
 func main() {
-	runRepl()
+	runLocal()
 }
 
 // runRepl runs the REPL (Read-Eval-Print Loop)

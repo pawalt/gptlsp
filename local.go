@@ -21,7 +21,13 @@ const (
 	nousHermes = "./models/nous-hermes-13b.ggmlv3.q4_1.bin"
 )
 
-const wizardBaseFormat = `
+const wizardBaseFormat = ` You are a helpful assistant.
+
+You have sent the following messages already:
+%s
+
+Now respond to the user.
+
 USER: %s
 ASSISTANT:
 `
@@ -45,7 +51,7 @@ type msg struct {
 // runLocal is the main function that runs the program locally.
 func runLocal() {
 	// Load the model with the specified options.
-	l, err := llama.New(nousHermes, llama.EnableF16Memory, llama.SetContext(2048), llama.SetGPULayers(1))
+	l, err := llama.New(wizard134, llama.EnableF16Memory, llama.SetContext(2048), llama.SetGPULayers(1))
 	if err != nil {
 		fmt.Println("Loading the model failed:", err.Error())
 		os.Exit(1)
@@ -66,10 +72,10 @@ func runLocal() {
 			log.Panic(err)
 		}
 
-		text := fmt.Sprintf(alpacaBaseFormat, textMessages, input)
+		text := fmt.Sprintf(wizardBaseFormat, textMessages, input)
 
 		history = append(history, msg{
-			role:    "user",
+			role:    "human",
 			content: strings.TrimSpace(input),
 		})
 
