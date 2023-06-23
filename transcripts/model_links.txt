@@ -1,0 +1,10 @@
+user: change the readme so that there's a section that has a list of model links. it should have a link to this nous hermes ggml file: https://huggingface.co/TheBloke/Nous-Hermes-13B-GGML
+assistant: calling function refactor_files
+refactored /Users/peyton/projects/gptlsp/README.md
+refactor_files({
+  "instructions": "In the README file, add a new section titled 'Model Links'. In this section, add a list item with the link 'https://huggingface.co/TheBloke/Nous-Hermes-13B-GGML' described as 'Nous Hermes GGML Model'.",
+  "paths": ["README.md"]
+}): {"success":true}
+assistant: I've updated the README with a new section called 'Model Links', and added the link you provided to the Nous Hermes GGML Model.
+user: thanks!
+assistant: You're welcome! If you have any other requests, feel free to ask.

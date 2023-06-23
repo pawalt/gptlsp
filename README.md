@@ -1,5 +1,3 @@
-i did not write this readme. can you guess who did
-
 # Project Title
 
 This project is a command-line tool written in Go. It interacts with the OpenAI API to perform file and text operations based on user input.
@@ -29,3 +27,7 @@ This application includes several key components:
 ## Usage
 
 Run the application from the command line. Ensure that you have set the necessary environment variables in a `.env` file.
+
+## Model Links
+
+- [Nous Hermes GGML Model](https://huggingface.co/TheBloke/Nous-Hermes-13B-GGML)
