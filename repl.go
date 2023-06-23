@@ -18,7 +18,7 @@ const (
 	gpt4 = openai.GPT40613
 )
 
-var activeFunctions = refactoringFunctions
+var activeMode = "refactor"
 
 // repl is the main read-eval-print loop function.
 func repl(client *openai.Client) {
@@ -46,7 +46,7 @@ func repl(client *openai.Client) {
 	for {
 		var nextMessage openai.ChatCompletionMessage
 		if inputRequired == "user" {
-			fmt.Print("user: ")
+			fmt.Printf("(%s) user: ", activeMode)
 			scanner.Scan()
 			nextMessage = openai.ChatCompletionMessage{
 				Role:    "user",
@@ -60,7 +60,7 @@ func repl(client *openai.Client) {
 
 		messages = append(messages, nextMessage)
 
-		completions, err := createChatCompletion(client, gpt4, messages, activeFunctions)
+		completions, err := createChatCompletion(client, gpt4, messages, modeToFunctions[activeMode])
 		if err != nil {
 			log.Panicf("could not create completions %v", err)
 		}

@@ -7,20 +7,20 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
-// Define the functions for refactoring and coding
-var refactoringFunctions = []*openai.FunctionDefine{
-	searchFilesMetadata,
-	refactorFilesMetadata,
-	globFilesMetadata,
-	switchModeMetadata,
-}
-
-var codingFunctions = []*openai.FunctionDefine{
-	searchFilesMetadata,
-	modifyFilesMetadata,
-	globFilesMetadata,
-	compileMetadata,
-	switchModeMetadata,
+var modeToFunctions = map[string][]*openai.FunctionDefine{
+	"refactor": {
+		searchFilesMetadata,
+		refactorFilesMetadata,
+		globFilesMetadata,
+		switchModeMetadata,
+	},
+	"code": {
+		searchFilesMetadata,
+		modifyFilesMetadata,
+		globFilesMetadata,
+		compileMetadata,
+		switchModeMetadata,
+	},
 }
 
 // Define the SwitchModeRequest struct
@@ -38,16 +38,13 @@ func SwitchMode(raw string) map[string]interface{} {
 		}
 	}
 
-	switch req.Mode {
-	case "refactor":
-		activeFunctions = refactoringFunctions
-	case "code":
-		activeFunctions = codingFunctions
-	default:
+	if _, found := modeToFunctions[req.Mode]; !found {
 		return map[string]interface{}{
 			"error": fmt.Sprintf("unrecognized mode: %s", req.Mode),
 		}
 	}
+
+	activeMode = req.Mode
 
 	return map[string]interface{}{
 		"success": true,
